@@ -1,18 +1,18 @@
 import debounce from 'lodash.debounce';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { SectionList, Text, TextInput, View, Alert } from 'react-native';
+import { SectionList, Text, TextInput, View, Alert, ListRenderItem, StyleSheet } from 'react-native';
 
-export type GenericListScreenProps = {
-    fetcher: () => Promise<any[]>;
-    renderItem: (item: any) => JSX.Element;
-    keyExtractor: (item: any, index: number) => string;
+export type GenericListScreenProps<T> = {
+    fetcher: () => Promise<T[]>;
+    renderItem: ListRenderItem<T>;
+    keyExtractor: (item: T, index: number) => string;
     filterBy: string;
     debounceTs?: number;
 };
 
 type Data = { type: string } & Record<string, string | number>;
 
-export function GenericListScreen(props: GenericListScreenProps) {
+export function GenericListScreen<T extends { type: string }>(props: GenericListScreenProps<T>) {
     const [data, setData] = useState<Data[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -55,37 +55,65 @@ export function GenericListScreen(props: GenericListScreenProps) {
         return null;
     }
 
-    return loading ? (
-        <View>
-            <Text>Loading...</Text>
+    return (
+        <View style={styles.container}>
+            {loading ? (
+                <Text>Loading...</Text>
+            ) : (
+                <>
+                    <TextInput
+                        style={styles.textInput}
+                        testID="searchInput"
+                        placeholder={`Search by ${filterBy}`}
+                        onChangeText={handleSetFilterValue}
+                        clearButtonMode="while-editing"
+                    />
+                    <SectionList
+                        testID="mainList"
+                        ListEmptyComponent={() => <Text testID="sectionEmptyState">No data found</Text>}
+                        sections={filteredData.reduce((acc: { title: string; data: any[] }[], item) => {
+                            const section = acc.find(section => section.title === item.type);
+                            if (section) {
+                                section.data.push(item);
+                            } else {
+                                acc.push({ title: item.type, data: [item] });
+                            }
+                            return acc;
+                        }, [])}
+                        SectionSeparatorComponent={() => <View style={{ height: 8 }} />}
+                        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+                        keyExtractor={keyExtractor}
+                        renderItem={renderItem}
+                        showsVerticalScrollIndicator={false}
+                        bounces={false}
+                        initialNumToRender={15}
+                        renderSectionHeader={({ section: { title } }) => (
+                            <Text style={styles.sectionTitle} testID="sectionHeader">
+                                {title}
+                            </Text>
+                        )}
+                    />
+                </>
+            )}
         </View>
-    ) : (
-        <>
-            <TextInput
-                testID="searchInput"
-                placeholder="Search"
-                onChangeText={handleSetFilterValue}
-                clearButtonMode="while-editing"
-                value={filterValue}
-            />
-            <SectionList
-                testID="mainList"
-                sections={filteredData.reduce((acc: { title: string; data: any[] }[], item) => {
-                    const section = acc.find(section => section.title === item.type);
-                    if (section) {
-                        section.data.push(item);
-                    } else {
-                        acc.push({ title: item.type, data: [item] });
-                    }
-                    return acc;
-                }, [])}
-                keyExtractor={keyExtractor}
-                renderItem={renderItem}
-                showsVerticalScrollIndicator={false}
-                bounces={false}
-                initialNumToRender={15}
-                renderSectionHeader={({ section: { title } }) => <Text testID="sectionHeader">{title}</Text>}
-            />
-        </>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        alignSelf: 'stretch',
+        flex: 1,
+        padding: 16,
+    },
+    textInput: {
+        height: 40,
+        borderColor: 'gray',
+        borderWidth: 1,
+        marginBottom: 24,
+        paddingHorizontal: 8,
+    },
+    sectionTitle: {
+        fontSize: 24,
+        fontWeight: '500',
+    },
+});

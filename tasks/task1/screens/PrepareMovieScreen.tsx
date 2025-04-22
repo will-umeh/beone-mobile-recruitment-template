@@ -4,9 +4,9 @@ import { Text } from 'react-native';
 
 const keyExtractor = (item: Movie) => item.title;
 const renderItem = function ({ item }: { item: Movie }) {
-    return <Text>{item.title}</Text>;
+    return <Text style={{ fontSize: 16 }}>{item.title}</Text>;
 };
 
-export function PrepareMovieScreen({ filterBy = 'title', ...rest }: Pick<GenericListScreenProps<Movie>, 'debounceTs' | 'filterBy'> = {}) {
+export function PrepareMovieScreen({ filterBy = 'title', ...rest }: Partial<Pick<GenericListScreenProps<Movie>, 'debounceTs' | 'filterBy'>> = {}) {
     return <GenericListScreen keyExtractor={keyExtractor} fetcher={fetchMovies} renderItem={renderItem} filterBy={filterBy} {...rest} />;
 }
