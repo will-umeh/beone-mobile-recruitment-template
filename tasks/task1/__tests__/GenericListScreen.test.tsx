@@ -5,21 +5,29 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 const user = userEvent.setup();
 
 describe('<PreparePeopleScreen /> will render person object and test functionality', () => {
+    test('will initially render a loading state when data is being fetched', async () => {
+        expect.hasAssertions();
+        const screen = render(<PreparePeopleScreen />);
+
+        await waitFor(() => {
+            expect(screen.getByText('Loading...')).toBeVisible();
+        });
+    });
+
     test('will render correctly once the data is fetched', async () => {
         const screen = render(<PreparePeopleScreen />);
 
-        expect(screen.getByTestId('mainList')).toBeVisible();
-        expect(screen.queryAllByTestId('sectionHeader')).toHaveLength(0);
+        await waitFor(() => {
+            expect(screen.getByTestId('mainList')).toBeVisible();
+        });
 
-        await advanceTimer(100);
         expect(screen.getAllByTestId('sectionHeader')).toHaveLength(4);
-
         expect(screen.getByTestId('mainList')).toHaveProp('showsVerticalScrollIndicator', false);
         expect(screen.getByTestId('mainList')).toHaveProp('bounces', false);
         expect(screen.getByTestId('mainList')).toHaveProp('initialNumToRender', 15);
     });
 
-    test('will filter the data when the default debouce time of 500 will pass', async () => {
+    test('will filter the data when the default debounce time of 500 will pass', async () => {
         const screen = render(<PreparePeopleScreen />);
 
         await advanceTimer(100);
